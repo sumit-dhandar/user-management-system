@@ -647,27 +647,38 @@ Address already in use: bind
 ```
 **Solution**: Change port in `application.properties` or kill process using port 8080.
 
-## License
+---
+## Learning Outcomes
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+This project helped me understand:
 
-## Contact & Support
-
-- **Author**: Sumit
-- **Email**: sumitsdhandar@gmail.com
-
-
-## Changelog
-
-### Version 1.0.0 (Current)
-- ✨ Initial release
-- 🔐 Spring Security integration
-- 📝 Complete CRUD operations
-- 💾 Redis caching support
-- 📚 OpenAPI/Swagger documentation
-- 🐳 Docker & Docker Compose support
-- 🏥 Spring Boot Actuator monitoring
+- Spring Boot REST API development
+- Layered architecture using Controller, Service, and Repository patterns
+- Spring Security authentication and authorization
+- DTO mapping using MapStruct and ModelMapper
+- Exception handling with global exception handlers
+- Redis caching integration
+- API documentation using Swagger/OpenAPI
+- Docker containerization and deployment
+- Database integration using Spring Data JPA and Hibernate
+- Application monitoring using Spring Boot Actuator
 
 ---
+
+## Author
+
+Sumit Dhandar
+
+- GitHub: https://github.com/sumit-dhandar
+- LinkedIn: https://www.linkedin.com/in/sumit-dhandar/
+- Email: sumitsdhandar@gmail.com
+
+---
+
+## License
+
+Copyright © 2026 Sumit Dhandar. All rights reserved.
+
+This project is shared for educational and portfolio purposes only.
 
 
