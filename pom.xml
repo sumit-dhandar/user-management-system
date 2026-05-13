@@ -136,7 +136,7 @@
                 </configuration>
             </plugin>
         </plugins>
-        <finalName>devops-integration</finalName>
+        <finalName>ubuntu-EC2</finalName>
     </build>
 
 </project>
