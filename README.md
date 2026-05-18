@@ -34,7 +34,8 @@ This project is a Spring Boot-based RESTful web service that provides comprehens
 
 ## Features
 
-- **🔐 Security**: Spring Security integration with role-based access control (ADMIN/USER roles)
+- **🔐 Security**: Spring Security integration with JWT (JSON Web Token) authentication
+- **🎫 JWT Authentication**: Stateless token-based authentication with secure token generation and validation
 - **📝 CRUD Operations**: Complete Create, Read, Update, Delete operations for users
 - **✅ Validation**: Input validation using Jakarta Validation framework
 - **🗂️ Object Mapping**: Automatic DTO/Entity mapping using MapStruct and ModelMapper
@@ -52,6 +53,7 @@ This project is a Spring Boot-based RESTful web service that provides comprehens
 | Spring Boot | 3.4.5 | Framework |
 | Java | 17 | Programming Language |
 | Spring Security | Latest | Authentication & Authorization |
+| JWT (jjwt) | 0.11.5 | JSON Web Token implementation |
 | Spring Data JPA | Latest | ORM & Database Access |
 | Hibernate | Latest | JPA Implementation |
 | MySQL | 8.0 | Relational Database |
@@ -66,40 +68,73 @@ This project is a Spring Boot-based RESTful web service that provides comprehens
 ## Project Structure
 
 ```
-springboot-restful-webservices/
+user-management-system/
 ├── src/
 │   ├── main/
 │   │   ├── java/net/javaguides/springboot/
-│   │   │   ├── SpringbootRestfulWebservicesApplication.java    # Main Application Class
+│   │   │   ├── SpringbootRestfulWebservicesApplication.java
+│   │   │   │
 │   │   │   ├── config/
-│   │   │   │   └── SecurityConfig.java                         # Security Configuration
+│   │   │   │   └── SecurityConfig.java
+│   │   │   │
 │   │   │   ├── controller/
-│   │   │   │   └── UserController.java                         # REST Endpoints
+│   │   │   │   ├── AuthController.java
+│   │   │   │   └── UserController.java
+│   │   │   │
 │   │   │   ├── service/
-│   │   │   │   └── UserService.java                            # Business Logic
+│   │   │   │   ├── AuthService.java (Interface)
+│   │   │   │   ├── UserService.java (Interface)
+│   │   │   │   └── impl/
+│   │   │   │       ├── AuthServiceImpl.java 
+│   │   │   │       └── UserServiceImpl.java 
+│   │   │   │
 │   │   │   ├── entity/
-│   │   │   │   └── User.java                                   # JPA Entity
+│   │   │   │   ├── User.java
+│   │   │   │   ├── UserJWT.java
+│   │   │   │   └── Role.java
+│   │   │   │
 │   │   │   ├── dto/
-│   │   │   │   └── UserDto.java                                # Data Transfer Object
+│   │   │   │   ├── LoginDto.java
+│   │   │   │   ├── RegisterDto.java
+│   │   │   │   ├── JWTAuthResponse.java
+│   │   │   │   ├── UserDto.java
+│   │   │   │   └── ErrorDetails.java
+│   │   │   │
 │   │   │   ├── repository/
-│   │   │   │   └── UserRepository.java                         # Data Access Layer
+│   │   │   │   ├── UserRepository.java
+│   │   │   │   ├── UserJWTRepository.java
+│   │   │   │   └── RoleRepository.java
+│   │   │   │
+│   │   │   ├── security/
+│   │   │   │   ├── JwtTokenProvider.java
+│   │   │   │   ├── JwtAuthenticationFilter.java
+│   │   │   │   ├── CustomUserDetailsService.java
+│   │   │   │   └── JwtAuthenticationEntryPoint.java
+│   │   │   │
 │   │   │   ├── mapper/
-│   │   │   │   ├── UserMapper.java                             # MapStruct Interface
-│   │   │   │   └── AutoUserMapper.java                         # Auto-generated Mapper
+│   │   │   │   ├── UserMapper.java (Interface)
+│   │   │   │   └── AutoUserMapper.java (Generated/Implementation)
+│   │   │   │
 │   │   │   └── exception/
-│   │   │       ├── GlobalExceptionalHandler.java               # Global Exception Handler
-│   │   │       ├── ErrorDetails.java                           # Error Response DTO
-│   │   │       ├── ResourceNotFoundException.java              # Custom Exception
-│   │   │       └── EmailAlreadyExistsException.java            # Custom Exception
+│   │   │       ├── GlobalExceptionalHandler.java
+│   │   │       ├── ErrorDetails.java
+│   │   │       ├── ResourceNotFoundException.java
+│   │   │       ├── EmailAlreadyExistsException.java
+│   │   │       └── UserManagementAPIException.java
+│   │   │
 │   │   └── resources/
-│   │       ├── application.properties                          # Default Configuration
-│   │       └── application-prod.properties                     # Production Configuration
+│   │       ├── application.properties
+│   │       └── application-prod.properties
+│   │
 │   └── test/
-│       └── java/...                                            # Unit Tests
-├── pom.xml                                                      # Maven Configuration
-├── Dockerfile                                                   # Docker Image Definition
-├── docker-compose.yml                                          # Docker Compose Setup
-└── mvnw                                                         # Maven Wrapper
+│       └── java/...
+│
+├── pom.xml
+├── Dockerfile
+├── docker-compose.yml
+├── mvnw & mvnw.cmd
+└── README.md
+
 
 ```
 
@@ -116,8 +151,8 @@ springboot-restful-webservices/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/sumit-dhandar/springboot-restful-webservices.git
-cd springboot-restful-webservices
+git clone https://github.com/sumit-dhandar/user-management-system.git
+cd user-management-system
 ```
 
 ### 2. Create MySQL Database
@@ -165,6 +200,12 @@ spring.jpa.hibernate.ddl-auto=update
 # Uncomment to use a custom port
 # server.port=9090
 
+# JWT Configuration
+app.jwt.secret=your-super-secret-key-min-32-characters-long-for-security
+app.jwt.expiration=86400000  # 24 hours in milliseconds
+app.jwt.prefix=Bearer 
+app.jwt.header=Authorization
+
 # Actuator Configuration
 management.endpoints.web.exposure.include=*
 management.endpoint.health.show-details=always
@@ -178,6 +219,7 @@ spring.redis.port=6379
 # Logging Configuration
 logging.level.org.springframework.web=DEBUG
 logging.level.org.springframework.data.redis=DEBUG
+logging.level.org.springframework.security=DEBUG
 logging.level.org.hibernate.SQL=DEBUG
 logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
 spring.jpa.show-sql=true
@@ -196,15 +238,115 @@ spring.datasource.url=jdbc:mysql://prod-db-host:3306/user_management
 spring.datasource.username=${DB_USERNAME}
 spring.datasource.password=${DB_PASSWORD}
 spring.datasource.hikari.maximum-pool-size=20
+
+# JWT Configuration
+app.jwt.secret=${JWT_SECRET}
+app.jwt.expiration=${JWT_EXPIRATION:86400000}
+app.jwt.prefix=Bearer 
+app.jwt.header=Authorization
+
 spring.cache.type=redis
 spring.redis.host=${REDIS_HOST}
 spring.redis.port=${REDIS_PORT}
 logging.level.root=INFO
 ```
 
-## Running the Application
+## JWT Authentication Guide
 
-### Local Development
+### How JWT Authentication Works
+
+This application uses JSON Web Tokens (JWT) for stateless, secure API authentication:
+
+1. **User Registration**: User creates an account via `/api/auth/register`
+2. **User Login**: User authenticates with credentials at `/api/auth/login`
+3. **Token Issuance**: Server validates credentials and issues a JWT token
+4. **Token Storage**: Client stores token (typically in localStorage or sessionStorage)
+5. **Token Usage**: Client includes token in every API request: `Authorization: Bearer {token}`
+6. **Token Validation**: Server validates token signature and expiration on each request
+7. **Protected Access**: Only valid, non-expired tokens grant access to protected resources
+
+### JWT Token Structure
+
+A JWT token consists of three parts separated by dots:
+
+```
+Header.Payload.Signature
+```
+
+**Example Token:**
+```
+eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI6MTYyNDU1MTUxMCwiZXhwIjoxNjI0NjM3OTEwfQ.L4qRZNUzHXVBvM8jLjL4u9xLdHvJN5yLmH7z8c9K3q2
+```
+
+**Header**: Contains algorithm and token type
+```json
+{
+  "alg": "HS512",
+  "typ": "JWT"
+}
+```
+
+**Payload**: Contains user claims and metadata
+```json
+{
+  "sub": "john.doe@example.com",
+  "iat": 1624551510,
+  "exp": 1624637910
+}
+```
+
+**Signature**: Cryptographically signed verification
+
+### Token Expiration & Refresh
+
+- **Default Expiration**: 24 hours (configurable in `application.properties`)
+- **Token Refresh**: Obtain new token by logging in again
+- **Expired Token**: Returns 401 Unauthorized response
+
+### Common JWT Errors
+
+| Error | Status | Cause | Solution |
+|-------|--------|-------|----------|
+| Missing Token | 401 | No Authorization header | Include `Authorization: Bearer {token}` in request |
+| Invalid Token | 401 | Tampered or malformed token | Re-login to get valid token |
+| Expired Token | 401 | Token expiration time exceeded | Login again to refresh token |
+| Invalid Signature | 401 | Token signed with different key | Use token from same server |
+
+### Testing JWT Authentication with cURL
+
+**1. Register User:**
+```bash
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john.doe@example.com",
+    "password": "Password123!"
+  }'
+```
+
+**2. Login User:**
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john.doe@example.com",
+    "password": "Password123!"
+  }'
+```
+
+**3. Extract Token from Response and Use in API Call:**
+```bash
+TOKEN="your_jwt_token_here"
+
+curl -X GET http://localhost:8080/api/users \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Running the Application
+
+#### Local Development
 
 ```bash
 # Option 1: Using Maven
@@ -264,14 +406,74 @@ Once the application is running, access the Swagger UI documentation:
 
 ### Base URL
 ```
+http://localhost:8080/api
+```
+
+### Authentication Endpoints
+
+#### 1. Register User
+```http
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john.doe@example.com",
+  "password": "securePassword123",
+  "roles": ["ROLE_USER"]
+}
+```
+
+**Response (201 Created)**
+```json
+{
+  "id": 1,
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john.doe@example.com",
+  "message": "User registered successfully"
+}
+```
+
+---
+
+#### 2. Login User
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "securePassword123"
+}
+```
+
+**Response (200 OK)**
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI6MTYyNDU1MTUxMCwiZXhwIjoxNjI0NjM3OTEwfQ...",
+  "tokenType": "Bearer",
+  "expiresIn": 86400000
+}
+```
+
+**Note**: Use the `accessToken` in the Authorization header for subsequent requests
+
+---
+
+### User Management Endpoints
+
+#### Base URL for User Endpoints
+```
 http://localhost:8080/api/users
 ```
 
-### 1. Create User
+#### 3. Create User
 ```http
 POST /api/users
 Content-Type: application/json
-Authorization: Bearer {TOKEN}
+Authorization: Bearer {JWT_TOKEN}
 
 {
   "firstName": "John",
@@ -290,14 +492,14 @@ Authorization: Bearer {TOKEN}
 }
 ```
 
-**Permissions**: ADMIN role required
+**Permissions**: Authenticated users with valid JWT token
 
 ---
 
-### 2. Get All Users
+#### 4. Get All Users
 ```http
 GET /api/users
-Authorization: Bearer {TOKEN}
+Authorization: Bearer {JWT_TOKEN}
 ```
 
 **Response (200 OK)**
@@ -320,10 +522,10 @@ Authorization: Bearer {TOKEN}
 
 ---
 
-### 3. Get User by ID
+#### 5. Get User by ID
 ```http
 GET /api/users/{id}
-Authorization: Bearer {TOKEN}
+Authorization: Bearer {JWT_TOKEN}
 ```
 
 **Response (200 OK)**
@@ -338,11 +540,11 @@ Authorization: Bearer {TOKEN}
 
 ---
 
-### 4. Update User
+#### 6. Update User
 ```http
 PUT /api/users/{id}
 Content-Type: application/json
-Authorization: Bearer {TOKEN}
+Authorization: Bearer {JWT_TOKEN}
 
 {
   "firstName": "John",
@@ -361,19 +563,19 @@ Authorization: Bearer {TOKEN}
 }
 ```
 
-**Permissions**: ADMIN role required
+**Permissions**: Authenticated users with valid JWT token
 
 ---
 
-### 5. Delete User
+#### 7. Delete User
 ```http
 DELETE /api/users/{id}
-Authorization: Bearer {TOKEN}
+Authorization: Bearer {JWT_TOKEN}
 ```
 
 **Response (204 No Content)**
 
-**Permissions**: ADMIN role required
+**Permissions**: Authenticated users with valid JWT token
 
 ---
 
@@ -404,43 +606,62 @@ CREATE INDEX idx_email ON users(email);
 
 ### Overview
 
-The application implements Spring Security with the following features:
+The application implements Spring Security with JWT (JSON Web Token) authentication for secure, stateless communication:
 
-- **Authentication**: Form-based and Basic authentication
-- **Authorization**: Role-based access control (RBAC)
-- **Roles Available**:
-  - `ADMIN`: Full access to create, update, and delete users
-  - `USER`: Read-only access to user data
+- **Authentication**: JWT-based token authentication (no sessions)
+- **Token Generation**: Secure token generation on login/registration
+- **Token Validation**: JWT signature and expiration validation
+- **Stateless Architecture**: Each request is independent with token-based identification
+- **Protected Resources**: All user endpoints require valid JWT token
+
+### JWT Configuration
+
+Configure JWT in `application.properties`:
+
+```properties
+# JWT Configuration
+app.jwt.secret=your-secret-key-min-32-characters-long-for-security
+app.jwt.expiration=86400000  # Token expiration in milliseconds (24 hours)
+app.jwt.prefix=Bearer 
+app.jwt.header=Authorization
+```
+
+### Authentication Flow
+
+1. **Register**: POST `/api/auth/register` with user credentials
+2. **Login**: POST `/api/auth/login` with email and password
+3. **Receive Token**: Server returns JWT token in response
+4. **Use Token**: Include token in Authorization header: `Authorization: Bearer <token>`
+5. **Token Validation**: Each request is validated before processing
 
 ### Default Credentials (Development)
 
-You can configure default users in `SecurityConfig.java`:
-
-```properties
-# Uncomment in application.properties for development
-# spring.security.user.name=sumit
-# spring.security.user.password=sumit2525
-# spring.security.user.roles=ADMIN
-```
+For testing purposes, you can configure default test users in the database initialization script.
 
 ### Protected Endpoints
 
-| Endpoint | Method | Required Role |
+| Endpoint | Method | Required Authentication |
 |----------|--------|---|
-| `/api/users` | POST | ADMIN |
-| `/api/users/{id}` | PUT | ADMIN |
-| `/api/users/{id}` | DELETE | ADMIN |
-| `/api/users` | GET | ADMIN, USER |
-| `/api/users/{id}` | GET | ADMIN, USER |
+| `/api/users` | POST | JWT Token (Authorization: Bearer {TOKEN}) |
+| `/api/users/{id}` | PUT | JWT Token (Authorization: Bearer {TOKEN}) |
+| `/api/users/{id}` | DELETE | JWT Token (Authorization: Bearer {TOKEN}) |
+| `/api/users` | GET | JWT Token (Authorization: Bearer {TOKEN}) |
+| `/api/users/{id}` | GET | JWT Token (Authorization: Bearer {TOKEN}) |
+| `/api/auth/register` | POST | Public |
+| `/api/auth/login` | POST | Public |
 
 ### Security Best Practices
 
-- ✅ Always use HTTPS in production
-- ✅ Implement JWT tokens for API clients
+- ✅ Always use HTTPS/TLS in production
+- ✅ Store JWT secret key in environment variables, not in code
+- ✅ Use strong secret keys (minimum 32 characters)
+- ✅ Implement short token expiration times
+- ✅ Refresh token mechanism for long-lived sessions
 - ✅ Use environment variables for sensitive credentials
 - ✅ Enable CORS only for trusted domains
-- ✅ Implement rate limiting for API endpoints
+- ✅ Implement rate limiting for authentication endpoints
 - ✅ Regular security updates and dependency scanning
+- ✅ Never expose JWT secret in logs or error messages
 
 ## Caching
 
@@ -583,6 +804,15 @@ The application implements centralized exception handling via `GlobalExceptional
 }
 ```
 
+**401 - Unauthorized (Invalid/Missing JWT Token)**
+```json
+{
+  "message": "Unauthorized",
+  "details": "JWT token is invalid or expired",
+  "timestamp": "2026-05-11T10:30:00"
+}
+```
+
 **500 - Internal Server Error**
 ```json
 {
@@ -647,6 +877,22 @@ Address already in use: bind
 ```
 **Solution**: Change port in `application.properties` or kill process using port 8080.
 
+**JWT Token Errors**
+```
+401 Unauthorized: JWT token is invalid or expired
+```
+**Solution**: 
+- Ensure JWT_SECRET is configured correctly in `application.properties`
+- Login again to get a fresh token
+- Check token expiration time
+- Verify Authorization header format: `Authorization: Bearer {token}`
+
+**JWT Secret Not Configured**
+```
+JWT requires a secret key
+```
+**Solution**: Set `app.jwt.secret` property in `application.properties` with at least 32 characters
+
 ---
 ## Learning Outcomes
 
@@ -654,7 +900,8 @@ This project helped me understand:
 
 - Spring Boot REST API development
 - Layered architecture using Controller, Service, and Repository patterns
-- Spring Security authentication and authorization
+- **JWT (JSON Web Token) authentication and authorization**
+- **Stateless API security with token-based authentication**
 - DTO mapping using MapStruct and ModelMapper
 - Exception handling with global exception handlers
 - Redis caching integration
@@ -662,6 +909,7 @@ This project helped me understand:
 - Docker containerization and deployment
 - Database integration using Spring Data JPA and Hibernate
 - Application monitoring using Spring Boot Actuator
+- Spring Security configuration for JWT-based APIs
 
 ---
 
